@@ -1,101 +1,109 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from collections import deque
 import time
+import datetime
 import types
+import threading
+from Queue import Queue
 
 from twitter_api import TwitterApi
 from database import Database
 
-class ClassName(object):
-  """docstring for ClassName"""
-  def __init__(self, arg):
-    super(ClassName, self).__init__()
-    self.arg = arg
-    
-
-class Crawler(object):
-  """docstring for Crawler"""
-  def __init__(self, users = None, followings = None):
+class ProfileThread(threading.Thread):
+  def __init__(self, thread_name, profiles_queue, visited_profiles_queue):
+    threading.Thread.__init__(self, name=thread_name)
     self.api = TwitterApi()
     self.db = Database()
+    self.profiles_queue = profiles_queue
+    self.visited_profiles_queue = visited_profiles_queue
 
-    self.is_first_time = True
-    self.visited_profiles_set = set()
-    self.visited_followings_set = set()
+  def run(self):
+    while self.profiles_queue.qsize() >= 0:
+      if self.profiles_queue.qsize() == 0:
+        time.sleep(120)
+        continue
 
-    self.unvisited_profiles_queue = deque()
-    self.unvisited_following_queue = deque()
-
-    if users:
-      self.unvisited_profiles_queue.extend(users)
-    if followings:
-      self.unvisited_following_queue.extend(users)
-
-  def start(self):
-    if self.api.is_oauth_successed() == None:
-      return
-
-    total_sleep_time = 0
-    while len(self.unvisited_profiles_queue) != 0 or len(self.unvisited_following_queue) != 0:
-      print "Profiles Left:\t", len(self.unvisited_profiles_queue)
-      print "Followings Left:\t", len(self.unvisited_following_queue)
+      print "%s Profiles Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_profiles_queue.qsize())
+      print "%s Profiles Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.profiles_queue.qsize())
       
-      # GET users/show API limits one request per 5 second
-      # Sleep 6 sec to ensure not exceeding the limitation
-      time.sleep(6)
-      total_sleep_time += 6
-
-      # get user proile
-      uid = self.unvisited_profiles_queue.popleft()
+      uid = self.profiles_queue.get()
       user_profile = self.api.get_user_profile(uid)
+
       if user_profile == None:
-        self.record_failure(failed_proile=uid)
+        self.db.record_failure(failed_proile=uid)
       else:
         self.db.insert_profile(user_profile)
-        self.visited_profiles_set.add(uid)
+        self.visited_profiles_queue.put(uid)
 
-      # get user's followings
-      if total_sleep_time > 60 or self.is_first_time:
-        # backup progress
-        self.backup_progress()
+      self.db.update_profile_progress(self.profiles_queue, self.visited_profiles_queue)
+      time.sleep(6)
 
-        uid = self.unvisited_following_queue.popleft()
+class FollowingThread(threading.Thread):
+  def __init__(self, thread_name, followings_queue, profiles_queue, visited_followings_queue, visited_profiles_queue):
+    threading.Thread.__init__(self, name=thread_name)
+    self.api = TwitterApi()
+    self.db = Database()
+    self.followings_queue = followings_queue
+    self.profiles_queue = profiles_queue
+    self.visited_followings_queue = visited_followings_queue
+    self.visited_profiles_queue = visited_profiles_queue 
 
-        if type(uid) is types.IntType:
-          followings = self.api.get_user_followings(uid=uid)
-        else:
-          followings = self.api.get_user_followings(sname=uid)
+  def run(self):
+    while self.followings_queue.qsize() > 0:
+      print "%s Followings Finished:\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followings_queue.qsize())
+      print "%s Followings Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.followings_queue.qsize())
+      uid = self.followings_queue.get()
 
-        # download followings ids
-        if followings == None:
-          self.record_failure(failed_following=uid)
-          total_sleep_time = 0
-          continue
+      if type(uid) is types.IntType:
+        followings = self.api.get_user_followings(uid=uid)
+      else:
+        followings = self.api.get_user_followings(sname=uid)
+      
+      # download followings ids
+      if followings == None:
+        self.db.record_failure(failed_following=uid)
+        time.sleep(61)
+        continue
 
-        self.db.insert_following(uid, followings)
+      self.db.insert_following(uid, followings)
         
-        self.visited_followings_set.add(uid)
-        # add ids to task queues
-        for id in followings:
-          if not self.is_repeated(id):
-            self.unvisited_profiles_queue.append(id)
-            self.unvisited_following_queue.append(id)
+      self.visited_followings_queue.put(uid)
+      # add ids to task queues
+      for id in followings:
+        if not self.is_repeated(id):
+          self.profiles_queue.put(id)
+          self.followings_queue.put(id)
 
-        total_sleep_time = 0
-        self.is_first_time = False
+      self.db.update_following_progress(self.followings_queue, self.visited_followings_queue)
+      time.sleep(61)
 
   def is_repeated(self, uid):
-    if uid in self.visited_profiles_set and uid in self.unvisited_profiles_queue and uid in self.visited_followings_set and uid in self.unvisited_following_queue:
+    if uid in self.visited_profiles_queue.queue and uid in self.profiles_queue.queue and uid in self.visited_followings_queue.queue and uid in self.followings_queue.queue:
       return True
     return False
 
-  def record_failure(self, failed_proile = None, failed_following = None):
-    if failed_proile:
-      self.db.record_failure(failed_proile=failed_proile)
-    else:
-      self.db.record_failure(failed_following=failed_following)
+class Crawler(object):
+  def __init__(self, users = None, followings = None):
+    self.visited_profiles_queue = Queue()
+    self.visited_followings_queue = Queue()
 
-  def backup_progress(self):
-    self.db.update_progress(self.unvisited_profiles_queue, self.unvisited_following_queue, self.visited_profiles_set, self.visited_followings_set)
+    self.profiles_queue = Queue()
+    self.followings_queue = Queue()
+
+    for u in users:
+      self.profiles_queue.put(u)
+    for f in followings:
+      self.followings_queue.put(f)
+
+  def start(self):
+    profile_thread = ProfileThread('Pro', self.profiles_queue, self.visited_profiles_queue)
+    following_thread = FollowingThread('Fol', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
+
+    following_thread.start()
+    profile_thread.start()
+    
+    following_thread.join()
+    profile_thread.join()
+
+    print "ALL DONE!"

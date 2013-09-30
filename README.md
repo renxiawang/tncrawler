@@ -12,4 +12,3 @@ where **user_list** is the file name of a text file that contains **user ids**. 
 
 #### Todos
 0. Complete the commond-line arguments processing function
-1. Add muti-threading funtionality to accelerate the crawling process
