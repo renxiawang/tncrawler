@@ -17,14 +17,13 @@ class Database(object):
     self.failure = self.db.failure
   
   def insert_profile(self, profile):
-    doc = {
-    "uid" : profile['id'],
-    "profile" : profile
-    }
-    self.profile.insert(doc)
+    self.profile.update({"uid":profile['id']}, {"$set":{"profile":profile}}, upsert = True)
 
   def insert_following(self, uid, following_ids):
-    self.profile.update({"$or":[{"uid":uid}, {"profile.screen_name":uid }]}, {"$set": {"following_ids": list(following_ids)}})
+    self.profile.update({"uid":uid}, {"$set": {"following_ids": list(following_ids)}}, upsert = True)
+
+  def insert_follower(self, uid, follower_ids):
+    self.profile.update({"uid":uid}, {"$set": {"follower_ids": list(follower_ids)}}, upsert = True)
 
   def update_profile_progress(self, profiles_queue, visited_profiles_queue):
     doc = {
@@ -40,11 +39,20 @@ class Database(object):
     }
     self.progress.update({"_id": 2}, {"$set" : doc}, upsert = True)
 
-  def record_failure(self, failed_proile = None, failed_following = None):
+  def update_follower_progress(self, followers_queue, visited_followers_queue):
+    doc = {
+    "followers_queue" : list(followers_queue.queue),
+    "visited_followers_queue" : list(visited_followers_queue.queue)
+    }
+    self.progress.update({"_id": 3}, {"$set" : doc}, upsert = True)
+
+  def record_failure(self, failed_proile = None, failed_following = None, failed_follower = None):
     if failed_proile:
       self.failure.update({"_id":1}, {"$addToSet":{"failed_proile":failed_proile}}, upsert = True)
-    else:
+    elif failed_following:
       self.failure.update({"_id":1}, {"$addToSet":{"failed_following":failed_following}}, upsert = True)
+    else:
+      self.failure.update({"_id":1}, {"$addToSet":{"failed_follower":failed_follower}}, upsert = True)
 
   def close(self):
     self.client.close()

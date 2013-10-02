@@ -31,7 +31,7 @@ class TwitterApi(object):
     try:
       user_proile = self.api.get_user(uid)
     except tweepy.error.TweepError, e:
-      print 'failed because of %s' % e.reason
+      print '%d failed because of %s' % (uid, e.reason)
 
     return user_proile
 
@@ -45,6 +45,33 @@ class TwitterApi(object):
 
     except tweepy.error.TweepError, e:
       friends_ids = None
-      print 'failed because of %s' % e.reason  
+      print '%d failed because of %s' % (uid, e.reason)
+      time.sleep(60)  
     
     return friends_ids
+
+  def get_user_followers(self, uid=None, sname=None):
+    followers_ids = []
+
+    try:
+      for follower in tweepy.Cursor(self.api.followers_ids, user_id=uid, screen_name=sname).pages():
+        followers_ids.extend(follower['ids'])
+        time.sleep(60)
+
+    except tweepy.error.TweepError, e:
+      followers_ids = None
+      print '%d failed because of %s' % (uid, e.reason)
+      time.sleep(60) 
+    
+    return followers_ids
+
+  def get_user_id_by_screen_name(self, snames):
+    snames = ['graceishuman','Luvvie','Scandalminute','goldietaylor','blackcanseco','youngsinick','karnythia','profblmkelley','LacharlesWard','drgoddess','GeeDee215','ladyknight33','Mrs_Amelia','MisJia','NeoScandal','C_ozzy8','dtburnetsky','PINKJUNKI','deborah91473','abbims']
+    for name in snames:
+      try:
+        u = self.api.get_user(screen_name=name)
+        print u['id']
+        time.sleep(5)
+      except tweepy.error.TweepError, e:
+        print "Exception:", name, e.reason
+        time.sleep(5)
