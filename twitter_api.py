@@ -65,8 +65,9 @@ class TwitterApi(object):
     
     return followers_ids
 
-  def get_user_id_by_screen_name(self, snames):
-    snames = ['graceishuman','Luvvie','Scandalminute','goldietaylor','blackcanseco','youngsinick','karnythia','profblmkelley','LacharlesWard','drgoddess','GeeDee215','ladyknight33','Mrs_Amelia','MisJia','NeoScandal','C_ozzy8','dtburnetsky','PINKJUNKI','deborah91473','abbims']
+  # To be deleted next update
+  def get_user_id_by_screen_name(self, snames=None):
+    snames = ['kerrywashington','guillermodiazyo','shondarhimes','ScandalABC','KatieQLoves','scottfoley','Joshmalina','tonygoldwyn','danbucatinsky','darbysofficial','columbusshort','bellamyyoung']
     for name in snames:
       try:
         u = self.api.get_user(screen_name=name)
