@@ -27,22 +27,22 @@ class Database(object):
 
   def update_profile_progress(self, profiles_queue, visited_profiles_queue):
     doc = {
-    "profiles_queue" : list(profiles_queue.queue),
-    "visited_profiles_queue" : list(visited_profiles_queue.queue)
+    "profiles_queue" : str(list(profiles_queue.queue)).strip('[]'),
+    "visited_profiles_queue" : str(list(visited_profiles_queue.queue)).strip('[]')
     }
     self.progress.update({"_id": 1}, {"$set" : doc}, upsert = True)
 
   def update_following_progress(self, followings_queue, visited_followings_queue):
     doc = {
-    "followings_queue" : list(followings_queue.queue),
-    "visited_followings_queue" : list(visited_followings_queue.queue)
+    "followings_queue" : str(list(followings_queue.queue)).strip('[]'),
+    "visited_followings_queue" : str(list(visited_followings_queue.queue)).strip('[]')
     }
     self.progress.update({"_id": 2}, {"$set" : doc}, upsert = True)
 
   def update_follower_progress(self, followers_queue, visited_followers_queue):
     doc = {
-    "followers_queue" : list(followers_queue.queue),
-    "visited_followers_queue" : list(visited_followers_queue.queue)
+    "followers_queue" : str(list(followers_queue.queue)).strip('[]'),
+    "visited_followers_queue" : str(list(visited_followers_queue.queue)).strip('[]')
     }
     self.progress.update({"_id": 3}, {"$set" : doc}, upsert = True)
 
@@ -53,6 +53,27 @@ class Database(object):
       self.failure.update({"_id":1}, {"$addToSet":{"failed_following":failed_following}}, upsert = True)
     else:
       self.failure.update({"_id":1}, {"$addToSet":{"failed_follower":failed_follower}}, upsert = True)
+
+  def load_progress(self):
+    # profiles_queue = self.progress.find({"_id":1})[0]["profiles_queue"]
+    # visited_profiles_queue = self.progress.find({"_id":1})[0]["visited_profiles_queue"]
+
+    # followings_queue = self.progress.find({"_id":2})[0]["followings_queue"]
+    # visited_followings_queue = self.progress.find({"_id":2})[0]["visited_followings_queue"]
+
+    # followers_queue = self.progress.find({"_id":3})[0]["followers_queue"]
+    # visited_followers_queue = self.progress.find({"_id":3})[0]["visited_followers_queue"]
+
+    profiles_queue = map(int, self.progress.find({"_id":1})[0]["profiles_queue"].split(','))
+    visited_profiles_queue = map(int, self.progress.find({"_id":1})[0]["visited_profiles_queue"].split(','))
+
+    followings_queue = map(int, self.progress.find({"_id":2})[0]["followings_queue"].split(','))
+    visited_followings_queue = map(int, self.progress.find({"_id":2})[0]["visited_followings_queue"].split(','))
+
+    followers_queue = map(int, self.progress.find({"_id":3})[0]["followers_queue"].split(','))
+    visited_followers_queue = map(int, self.progress.find({"_id":3})[0]["visited_followers_queue"].split(','))
+
+    return profiles_queue, visited_profiles_queue, followings_queue, visited_followings_queue, followers_queue, visited_followers_queue
 
   def close(self):
     self.client.close()

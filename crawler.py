@@ -23,20 +23,22 @@ class ProfileThread(threading.Thread):
       if self.profiles_queue.qsize() == 0:
         time.sleep(120)
         continue
-
-      print "%s Profiles Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_profiles_queue.qsize())
-      print "%s Profiles Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.profiles_queue.qsize())
       
       uid = self.profiles_queue.get()
       user_profile = self.api.get_user_profile(uid)
 
       if user_profile == None:
         self.db.record_failure(failed_proile=uid)
+        self.profiles_queue.task_done()
       else:
         self.db.insert_profile(user_profile)
         self.visited_profiles_queue.put(uid)
 
       self.db.update_profile_progress(self.profiles_queue, self.visited_profiles_queue)
+      self.profiles_queue.task_done()
+
+      print "%s Profiles Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_profiles_queue.qsize())
+      print "%s Profiles Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.profiles_queue.qsize())
       time.sleep(6)
 
 class FollowingThread(threading.Thread):
@@ -51,8 +53,6 @@ class FollowingThread(threading.Thread):
 
   def run(self):
     while self.followings_queue.qsize() > 0:
-      print "%s Followings Finished:\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followings_queue.qsize())
-      print "%s Followings Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.followings_queue.qsize())
       uid = self.followings_queue.get()
 
       if type(uid) is types.IntType:
@@ -64,30 +64,47 @@ class FollowingThread(threading.Thread):
       if followings == None:
         self.db.record_failure(failed_following=uid)
         # time.sleep(61)
+        self.followings_queue.task_done()
         continue
 
       self.db.insert_following(uid, followings)
         
       self.visited_followings_queue.put(uid)
+
       # add ids to task queues
-      for id in followings:
-        if not self.is_in_profile_queue(id):
+      followings_for_profiles_queue = self.exclude_processed_profiles(followings)
+      followings_for_followings_queue = self.exclude_processed_followings(followings)
+
+      for id in followings_for_profiles_queue:
           self.profiles_queue.put(id)
-        if not self.is_in_following_queue(id):
+      
+      for id in followings_for_followings_queue:
           self.followings_queue.put(id)
 
       self.db.update_following_progress(self.followings_queue, self.visited_followings_queue)
+      self.followings_queue.task_done()
+
+      print "%s Followings Finished:\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followings_queue.qsize())
+      print "%s Followings Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.followings_queue.qsize())
       # time.sleep(61)
 
-  def is_in_profile_queue(self, uid):
-    if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
-      return True
-    return False
+  def exclude_processed_profiles(self, followings):
+    profiles_set = set(self.visited_profiles_queue.queue).union(set(self.profiles_queue.queue))
+    return set(followings).difference(profiles_set)
 
-  def is_in_following_queue(self, uid):
-    if uid in self.visited_followings_queue.queue or uid in self.followings_queue.queue:
-      return True
-    return False
+  def exclude_processed_followings(self, followings):
+    followings_set = set(self.visited_followings_queue.queue).union(set(self.followings_queue.queue))
+    return set(followings).difference(followings_set)
+
+  # def is_in_profile_queue(self, uid):
+  #   if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
+  #     return True
+  #   return False
+
+  # def is_in_following_queue(self, uid):
+  #   if uid in self.visited_followings_queue.queue or uid in self.followings_queue.queue:
+  #     return True
+  #   return False
 
 class FollowerThread(threading.Thread):
   def __init__(self, thread_name, followers_queue, profiles_queue, visited_followers_queue, visited_profiles_queue):
@@ -101,8 +118,6 @@ class FollowerThread(threading.Thread):
 
   def run(self):
     while self.followers_queue.qsize() > 0:
-      print "%s Followers Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followers_queue.qsize())
-      print "%s Followers Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.followers_queue.qsize())
       uid = self.followers_queue.get()
 
       if type(uid) is types.IntType:
@@ -113,6 +128,7 @@ class FollowerThread(threading.Thread):
       # download followers ids
       if followers == None:
         self.db.record_failure(failed_follower=uid)
+        self.followers_queue.task_done()
         # time.sleep(61)
         continue
 
@@ -120,29 +136,44 @@ class FollowerThread(threading.Thread):
         
       self.visited_followers_queue.put(uid)
       # add ids to task queues
-      for id in followers:
-        if not self.is_in_profile_queue(id):
+      followers_for_profiles_queue = self.exclude_processed_profiles(followers)
+      followers_for_followers_queue = self.exclude_processed_followers(followers)
+
+      for id in followers_for_profiles_queue:
           self.profiles_queue.put(id)
-        if not self.is_in_follower_queue(id):
+      
+      for id in followers_for_followers_queue:
           self.followers_queue.put(id)
 
       self.db.update_follower_progress(self.followers_queue, self.visited_followers_queue)
+      self.followers_queue.task_done()
+
+      print "%s Followers Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followers_queue.qsize())
+      print "%s Followers Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.followers_queue.qsize())
       # time.sleep(61)
 
-  def is_in_profile_queue(self, uid):
-    if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
-      return True
-    return False
+  def exclude_processed_profiles(self, followers):
+    profiles_set = set(self.visited_profiles_queue.queue).union(set(self.profiles_queue.queue))
+    return set(followers).difference(profiles_set)
 
-  def is_in_follower_queue(self, uid):
-    if uid in self.visited_followers_queue.queue or uid in self.followers_queue.queue:
-      return True
-    return False
+  def exclude_processed_followers(self, followers):
+    followers_set = set(self.visited_followers_queue.queue).union(set(self.followers_queue.queue))
+    return set(followers).difference(followers_set)
+
+  # def is_in_profile_queue(self, uid):
+  #   if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
+  #     return True
+  #   return False
+
+  # def is_in_follower_queue(self, uid):
+  #   if uid in self.visited_followers_queue.queue or uid in self.followers_queue.queue:
+  #     return True
+  #   return False
 
 
 
 class Crawler(object):
-  def __init__(self, users = None, followings = None, followers = None):
+  def __init__(self, profiles = None, visited_profiles = None, followings = None, visited_followings = None, followers = None, visited_followers = None):
     self.visited_profiles_queue = Queue()
     self.visited_followings_queue = Queue()
     self.visited_followers_queue = Queue()
@@ -151,12 +182,18 @@ class Crawler(object):
     self.followings_queue = Queue()
     self.followers_queue = Queue()
 
-    for u in users:
-      self.profiles_queue.put(u)
+    for p in profiles:
+      self.profiles_queue.put(p)
+    for vp in visited_profiles:
+      self.visited_profiles_queue.put(vp)
     for f in followings:
       self.followings_queue.put(f)
+    for vf in visited_followings:
+      self.visited_followings_queue.put(vf)
     for f in followers:
       self.followers_queue.put(f)
+    for vf in visited_followers:
+      self.visited_followers_queue.put(vf)
 
   def start(self):
     profile_thread = ProfileThread('Profi', self.profiles_queue, self.visited_profiles_queue)

@@ -8,10 +8,10 @@ from tweepy.parsers import JSONParser
 class TwitterApi(object):
 
   def __init__(self):
-    self.consumer_key = 'BfdpgMeDAzqNIixHhLjQ'
-    self.consumer_secret = 'wfYF8Tp4uSJ3nGgqe5yGB1Wn6XOX8MYC5vcuavXBpsU'
-    self.access_token = '153077173-bAfnlt3NJEGj6KDE8BDYq93GCJ3omoZMtJreqoU9'
-    self.access_secret = 'x2eMIdu5AK02bLldfE7gxVYdnsnLRIUXwWrDoxAo'
+    self.consumer_key = 'UtIptL4lyPuXK8Nwbdf3rw'
+    self.consumer_secret = 'UjZ4gpT9y8imJmh63uf528SpBLmE4K6XjkR9DKw8zkk'
+    self.access_token = '1928368088-0Orce72vcWcRgXHrmxsU1vVNYUxfb3PUcGbL8y3'
+    self.access_secret = 'l1JCaFALvn3pFrMXgq9JLL7l93atUxWPcCvBsuJDQ'
 
     self.auth = tweepy.auth.OAuthHandler(self.consumer_key, self.consumer_secret)
     self.auth.set_access_token(self.access_token, self.access_secret)
