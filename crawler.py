@@ -173,7 +173,7 @@ class FollowerThread(threading.Thread):
 
 
 class Crawler(object):
-  def __init__(self, profiles = None, visited_profiles = None, followings = None, visited_followings = None, followers = None, visited_followers = None):
+  def __init__(self, profiles = list(), visited_profiles = list(), followings = list(), visited_followings = list(), followers = list(), visited_followers = list()):
     self.visited_profiles_queue = Queue()
     self.visited_followings_queue = Queue()
     self.visited_followers_queue = Queue()

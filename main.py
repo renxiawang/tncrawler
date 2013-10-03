@@ -21,7 +21,7 @@ def load_user_list():
 def main():
   user_list = load_user_list()
   if user_list:
-    crawler = Crawler(user_list, None, user_list, None, user_list, None)
+    crawler = Crawler(profiles=user_list, followings=user_list, followers=user_list)
     crawler.start()
 
 if __name__ == '__main__':
