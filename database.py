@@ -7,14 +7,16 @@ Database Module
 """
 
 from pymongo import MongoClient
+import gridfs
 
 class Database(object):
   def __init__(self):
     self.client = MongoClient('localhost', 27017)
-    self.db = self.client.twitter_network
+    self.db = self.client.twitter_network_new
     self.profile = self.db.profile
     self.progress = self.db.progress
     self.failure = self.db.failure
+    self.fs = gridfs.GridFS(self.db)
   
   def insert_profile(self, profile):
     self.profile.update({"uid":profile['id']}, {"$set":{"profile":profile}}, upsert = True)
@@ -26,25 +28,49 @@ class Database(object):
     self.profile.update({"uid":uid}, {"$set": {"follower_ids": list(follower_ids)}}, upsert = True)
 
   def update_profile_progress(self, profiles_queue, visited_profiles_queue):
-    doc = {
-    "profiles_queue" : str(list(profiles_queue.queue)).strip('[]'),
-    "visited_profiles_queue" : str(list(visited_profiles_queue.queue)).strip('[]')
-    }
-    self.progress.update({"_id": 1}, {"$set" : doc}, upsert = True)
+    if self.fs.exists("profile"):
+      self.fs.delete("profile")
+
+    if self.fs.exists("vprofile"):
+      self.fs.delete("vprofile")
+
+    self.fs.put(str(list(profiles_queue.queue)).strip('[]'), filename="pro", _id="profile")
+    self.fs.put(str(list(visited_profiles_queue.queue)).strip('[]'), filename="pro", _id="vprofile")
+    # doc = {
+    # "profiles_queue" : str(list(profiles_queue.queue)).strip('[]'),
+    # "visited_profiles_queue" : str(list(visited_profiles_queue.queue)).strip('[]')
+    # }
+    # self.progress.update({"_id": 1}, {"$set" : doc}, upsert = True)
 
   def update_following_progress(self, followings_queue, visited_followings_queue):
-    doc = {
-    "followings_queue" : str(list(followings_queue.queue)).strip('[]'),
-    "visited_followings_queue" : str(list(visited_followings_queue.queue)).strip('[]')
-    }
-    self.progress.update({"_id": 2}, {"$set" : doc}, upsert = True)
+    if self.fs.exists("following"):
+      self.fs.delete("following")
+
+    if self.fs.exists("vfollowing"):
+      self.fs.delete("vfollowing")
+
+    self.fs.put(str(list(followings_queue.queue)).strip('[]'), filename="ing", _id="following")
+    self.fs.put(str(list(visited_followings_queue.queue)).strip('[]'), filename="ing", _id="vfollowing")
+    # doc = {
+    # "followings_queue" : str(list(followings_queue.queue)).strip('[]'),
+    # "visited_followings_queue" : str(list(visited_followings_queue.queue)).strip('[]')
+    # }
+    # self.progress.update({"_id": 2}, {"$set" : doc}, upsert = True)
 
   def update_follower_progress(self, followers_queue, visited_followers_queue):
-    doc = {
-    "followers_queue" : str(list(followers_queue.queue)).strip('[]'),
-    "visited_followers_queue" : str(list(visited_followers_queue.queue)).strip('[]')
-    }
-    self.progress.update({"_id": 3}, {"$set" : doc}, upsert = True)
+    if self.fs.exists("follower"):
+      self.fs.delete("follower")
+
+    if self.fs.exists("vfollower"):
+      self.fs.delete("vfollower")
+
+    self.fs.put(str(list(followers_queue.queue)).strip('[]'), filename="wer", _id="follower")
+    self.fs.put(str(list(visited_followers_queue.queue)).strip('[]'), filename="wer", _id="vfollower")
+    # doc = {
+    # "followers_queue" : str(list(followers_queue.queue)).strip('[]'),
+    # "visited_followers_queue" : str(list(visited_followers_queue.queue)).strip('[]')
+    # }
+    # self.progress.update({"_id": 3}, {"$set" : doc}, upsert = True)
 
   def record_failure(self, failed_proile = None, failed_following = None, failed_follower = None):
     if failed_proile:
