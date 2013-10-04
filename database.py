@@ -81,23 +81,12 @@ class Database(object):
       self.failure.update({"_id":1}, {"$addToSet":{"failed_follower":failed_follower}}, upsert = True)
 
   def load_progress(self):
-    # profiles_queue = self.progress.find({"_id":1})[0]["profiles_queue"]
-    # visited_profiles_queue = self.progress.find({"_id":1})[0]["visited_profiles_queue"]
-
-    # followings_queue = self.progress.find({"_id":2})[0]["followings_queue"]
-    # visited_followings_queue = self.progress.find({"_id":2})[0]["visited_followings_queue"]
-
-    # followers_queue = self.progress.find({"_id":3})[0]["followers_queue"]
-    # visited_followers_queue = self.progress.find({"_id":3})[0]["visited_followers_queue"]
-
-    profiles_queue = map(int, self.progress.find({"_id":1})[0]["profiles_queue"].split(','))
-    visited_profiles_queue = map(int, self.progress.find({"_id":1})[0]["visited_profiles_queue"].split(','))
-
-    followings_queue = map(int, self.progress.find({"_id":2})[0]["followings_queue"].split(','))
-    visited_followings_queue = map(int, self.progress.find({"_id":2})[0]["visited_followings_queue"].split(','))
-
-    followers_queue = map(int, self.progress.find({"_id":3})[0]["followers_queue"].split(','))
-    visited_followers_queue = map(int, self.progress.find({"_id":3})[0]["visited_followers_queue"].split(','))
+    profiles_queue = map(int, self.fs.get("profile").read().split(","))
+    visited_profiles_queue = map(int, self.fs.get("vprofile").read().split(","))
+    followings_queue = map(int, self.fs.get("following").read().split(","))
+    visited_followings_queue = map(int, self.fs.get("vfollowing").read().split(","))
+    followers_queue = map(int, self.fs.get("follower").read().split(","))
+    visited_followers_queue = map(int, self.fs.get("vfollower").read().split(","))
 
     return profiles_queue, visited_profiles_queue, followings_queue, visited_followings_queue, followers_queue, visited_followers_queue
 
