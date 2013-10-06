@@ -10,10 +10,12 @@ A crawler for crawling user profiles, followings and followers on Twitter.
 
 #### Usages
 To initial the crawling task, execute:
+
     python main.py user_list
 where **user_list** is the file name of a text file that contains **user ids**. One **user id** per line. 
 
 To continue the task after program crash, execute:
+
     python main_load.py
 
 #### Todos
