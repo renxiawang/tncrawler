@@ -17,3 +17,4 @@ where **user_list** is the file name of a text file that contains **user ids**. 
 1. Meet PEP8 Standard
 2. Rewrite three thread classes; Consider a solution using thread pool 
 3. Logging function
+4. Combine main.py and main_load.py
