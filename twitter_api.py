@@ -8,10 +8,10 @@ from tweepy.parsers import JSONParser
 class TwitterApi(object):
 
   def __init__(self):
-    self.consumer_key = 'BfdpgMeDAzqNIixHhLjQ'
-    self.consumer_secret = 'wfYF8Tp4uSJ3nGgqe5yGB1Wn6XOX8MYC5vcuavXBpsU'
-    self.access_token = '153077173-bAfnlt3NJEGj6KDE8BDYq93GCJ3omoZMtJreqoU9'
-    self.access_secret = 'x2eMIdu5AK02bLldfE7gxVYdnsnLRIUXwWrDoxAo'
+    self.consumer_key = 'UtIptL4lyPuXK8Nwbdf3rw'
+    self.consumer_secret = 'UjZ4gpT9y8imJmh63uf528SpBLmE4K6XjkR9DKw8zkk'
+    self.access_token = '1928368088-0Orce72vcWcRgXHrmxsU1vVNYUxfb3PUcGbL8y3'
+    self.access_secret = 'l1JCaFALvn3pFrMXgq9JLL7l93atUxWPcCvBsuJDQ'
 
     self.auth = tweepy.auth.OAuthHandler(self.consumer_key, self.consumer_secret)
     self.auth.set_access_token(self.access_token, self.access_secret)
@@ -31,7 +31,7 @@ class TwitterApi(object):
     try:
       user_proile = self.api.get_user(uid)
     except tweepy.error.TweepError, e:
-      print 'failed because of %s' % e.reason
+      print '%s failed because of %s' % (uid, e.reason)
 
     return user_proile
 
@@ -45,6 +45,22 @@ class TwitterApi(object):
 
     except tweepy.error.TweepError, e:
       friends_ids = None
-      print 'failed because of %s' % e.reason  
+      print '%s failed because of %s' % (uid, e.reason)
+      time.sleep(60)  
     
     return friends_ids
+
+  def get_user_followers(self, uid=None, sname=None):
+    followers_ids = []
+
+    try:
+      for follower in tweepy.Cursor(self.api.followers_ids, user_id=uid, screen_name=sname).pages():
+        followers_ids.extend(follower['ids'])
+        time.sleep(60)
+
+    except tweepy.error.TweepError, e:
+      followers_ids = None
+      print '%s failed because of %s' % (uid, e.reason)
+      time.sleep(60) 
+    
+    return followers_ids

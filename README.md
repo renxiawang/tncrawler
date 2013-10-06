@@ -1,7 +1,7 @@
 tncrawler
 =========
 
-A crawler for crawling user profiles and followings on Twitter. 
+A crawler for crawling user profiles, followings and followers on Twitter. 
 
 #### Requires
 1. [Tweepy](https://github.com/tweepy/tweepy)
@@ -15,3 +15,5 @@ where **user_list** is the file name of a text file that contains **user ids**. 
 #### Todos
 0. Complete the commond-line arguments processing function
 1. Meet PEP8 Standard
+2. Rewrite three thread classes; Consider a solution using thread pool 
+3. Logging function
