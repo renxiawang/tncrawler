@@ -39,9 +39,13 @@ class TwitterApi(object):
     friends_ids = []
 
     try:
-      for friends in tweepy.Cursor(self.api.friends_ids, user_id=uid, screen_name=sname).pages():
-        friends_ids.extend(friends['ids'])
-        time.sleep(60)
+      friends_ids = self.api.friends_ids(user_id=uid, screen_name=sname)['ids']
+      print "get", len(friends_ids), "followings of ", uid
+      time.sleep(60)
+      #for friends in tweepy.Cursor(self.api.friends_ids, user_id=uid, screen_name=sname).pages():
+      #  print "crawling followings"
+      #  friends_ids.extend(friends['ids'])
+      #  time.sleep(60)
 
     except tweepy.error.TweepError, e:
       friends_ids = None
@@ -54,9 +58,13 @@ class TwitterApi(object):
     followers_ids = []
 
     try:
-      for follower in tweepy.Cursor(self.api.followers_ids, user_id=uid, screen_name=sname).pages():
-        followers_ids.extend(follower['ids'])
-        time.sleep(60)
+      followers_ids = self.api.followers_ids(user_id=uid, screen_name=sname)['ids']
+      print "get", len(followers_ids), "followers of ", uid
+      time.sleep(60)
+      #for follower in tweepy.Cursor(self.api.followers_ids, user_id=uid, screen_name=sname).pages():
+      #  print "crawling followers"
+      #  followers_ids.extend(follower['ids'])
+      #  time.sleep(60)
 
     except tweepy.error.TweepError, e:
       followers_ids = None
@@ -64,3 +72,4 @@ class TwitterApi(object):
       time.sleep(60) 
     
     return followers_ids
+

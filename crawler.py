@@ -27,8 +27,9 @@ class ProfileThread(threading.Thread):
       uid = self.profiles_queue.get()
       if self.db.is_existed(uid, "profile"):
         self.profiles_queue.task_done()
+        print "skip ",uid
         continue
-
+      print "Profiles...I am alive", uid
       user_profile = self.api.get_user_profile(uid)
 
       if user_profile == None:
@@ -38,11 +39,12 @@ class ProfileThread(threading.Thread):
         self.db.insert_profile(user_profile)
         self.visited_profiles_queue.put(uid)
 
+      #self.db.update_profile_progress(self.profiles_queue, self.visited_profiles_queue)
       self.profiles_queue.task_done()
 
       print "%s Profiles Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_profiles_queue.qsize())
       print "%s Profiles Left:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.profiles_queue.qsize())
-      time.sleep(5)
+      time.sleep(6)
 
 class FollowingThread(threading.Thread):
   def __init__(self, thread_name, followings_queue, profiles_queue, visited_followings_queue, visited_profiles_queue):
@@ -60,9 +62,11 @@ class FollowingThread(threading.Thread):
       
       if self.db.is_existed(uid, "following_ids"):
         self.followings_queue.task_done()
+        print "skip ", uid
         continue
 
       if type(uid) is types.IntType:
+        print "Followings...I am alive ", uid
         followings = self.api.get_user_followings(uid=uid)
       else:
         followings = self.api.get_user_followings(sname=uid)
@@ -70,6 +74,7 @@ class FollowingThread(threading.Thread):
       # download followings ids
       if followings == None:
         self.db.record_failure(failed_following=uid)
+        # time.sleep(61)
         self.followings_queue.task_done()
         continue
 
@@ -87,6 +92,7 @@ class FollowingThread(threading.Thread):
       for id in followings_for_followings_queue:
           self.followings_queue.put(id)
 
+      #self.db.update_following_progress(self.followings_queue, self.visited_followings_queue)
       self.followings_queue.task_done()
 
       print "%s Followings Finished:\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followings_queue.qsize())
@@ -100,6 +106,16 @@ class FollowingThread(threading.Thread):
   def exclude_processed_followings(self, followings):
     followings_set = set(self.visited_followings_queue.queue).union(set(self.followings_queue.queue))
     return set(followings).difference(followings_set)
+
+  # def is_in_profile_queue(self, uid):
+  #   if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
+  #     return True
+  #   return False
+
+  # def is_in_following_queue(self, uid):
+  #   if uid in self.visited_followings_queue.queue or uid in self.followings_queue.queue:
+  #     return True
+  #   return False
 
 class FollowerThread(threading.Thread):
   def __init__(self, thread_name, followers_queue, profiles_queue, visited_followers_queue, visited_profiles_queue):
@@ -115,11 +131,14 @@ class FollowerThread(threading.Thread):
     while self.followers_queue.qsize() > 0:
       uid = self.followers_queue.get()
       
+    
       if self.db.is_existed(uid, "follower_ids"):
         self.followers_queue.task_done()
+        print "skip ", uid
         continue
 
       if type(uid) is types.IntType:
+        print "Followers.... I am alive! ", uid
         followers = self.api.get_user_followers(uid=uid)
       else:
         followers = self.api.get_user_followers(sname=uid)
@@ -144,6 +163,7 @@ class FollowerThread(threading.Thread):
       for id in followers_for_followers_queue:
           self.followers_queue.put(id)
 
+      # self.db.update_follower_progress(self.followers_queue, self.visited_followers_queue)
       self.followers_queue.task_done()
 
       print "%s Followers Finished:\t\t %d" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.visited_followers_queue.qsize())
@@ -157,6 +177,18 @@ class FollowerThread(threading.Thread):
   def exclude_processed_followers(self, followers):
     followers_set = set(self.visited_followers_queue.queue).union(set(self.followers_queue.queue))
     return set(followers).difference(followers_set)
+
+  # def is_in_profile_queue(self, uid):
+  #   if uid in self.visited_profiles_queue.queue or uid in self.profiles_queue.queue:
+  #     return True
+  #   return False
+
+  # def is_in_follower_queue(self, uid):
+  #   if uid in self.visited_followers_queue.queue or uid in self.followers_queue.queue:
+  #     return True
+  #   return False
+
+
 
 class Crawler(object):
   def __init__(self, profiles = list(), visited_profiles = list(), followings = list(), visited_followings = list(), followers = list(), visited_followers = list()):
