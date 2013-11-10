@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 client = MongoClient('localhost', 27017)
-db = client.twitter_network_new
+db = client.scandal_network
 profile = db.profile
 
 print "Profiles: ", profile.find({"profile":{"$exists":True}}).count()

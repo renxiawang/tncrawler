@@ -11,7 +11,7 @@ from pymongo import MongoClient
 class Database(object):
   def __init__(self):
     self.client = MongoClient('localhost', 27017)
-    self.db = self.client.twitter_network_new
+    self.db = self.client.scandal_network
     self.profile = self.db.profile
     self.progress = self.db.progress
     self.failure = self.db.failure
@@ -95,24 +95,30 @@ class Database(object):
     visited_followers = []
 
     for p in self.profile.find():
-      if 'profile' in p:
+      if p['profile']['friends_count'] > 10000:
+        continue
+      else:
         visited_profiles.append(p['uid'])
-      if 'following_ids' in p:
-        visited_followings.append(p['uid'])
-        if len(p['following_ids']) > 5000:
-          unvisited_profiles.extend(p['following_ids'][:5000])
-        else:
-          unvisited_profiles.extend(p['following_ids'])
-      if 'follower_ids' in p:
-        visited_followers.append(p['uid'])
-        if len(p['follower_ids']) > 5000:
-          unvisited_profiles.extend(p['follower_ids'][:5000])
-        else:
-          unvisited_profiles.extend(p['follower_ids'])
+        unvisited_followings.append(p['uid'])
+        unvisited_followers.append(p['uid'])
+      #if 'profile' in p:
+      #  visited_profiles.append(p['uid'])
+      #if 'following_ids' in p:
+      #  visited_followings.append(p['uid'])
+      #  if len(p['following_ids']) > 5000:
+      #    unvisited_profiles.extend(p['following_ids'][:5000])
+      #  else:
+      #    unvisited_profiles.extend(p['following_ids'])
+      #if 'follower_ids' in p:
+      #  visited_followers.append(p['uid'])
+      #  if len(p['follower_ids']) > 5000:
+      #    unvisited_profiles.extend(p['follower_ids'][:5000])
+      #  else:
+      #    unvisited_profiles.extend(p['follower_ids'])
 
-    unvisited_followings = list(set(unvisited_profiles).difference(set(visited_followings)))
-    unvisited_followers = list(set(unvisited_profiles).difference(set(visited_followers)))
-    unvisited_profiles = list(set(unvisited_profiles).difference(set(visited_profiles)))   
+    # unvisited_followings = list(set(unvisited_profiles).difference(set(visited_followings)))
+    # unvisited_followers = list(set(unvisited_profiles).difference(set(visited_followers)))
+    # unvisited_profiles = list(set(unvisited_profiles).difference(set(visited_profiles)))   
 
     return unvisited_profiles, visited_profiles, unvisited_followings, visited_followings, unvisited_followers, visited_followers
 

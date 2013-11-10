@@ -84,13 +84,13 @@ class FollowingThread(threading.Thread):
 
       # add ids to task queues
       followings_for_profiles_queue = self.exclude_processed_profiles(followings)
-      followings_for_followings_queue = self.exclude_processed_followings(followings)
+      # followings_for_followings_queue = self.exclude_processed_followings(followings)
 
       for id in followings_for_profiles_queue:
           self.profiles_queue.put(id)
       
-      for id in followings_for_followings_queue:
-          self.followings_queue.put(id)
+      # for id in followings_for_followings_queue:
+      #     self.followings_queue.put(id)
 
       #self.db.update_following_progress(self.followings_queue, self.visited_followings_queue)
       self.followings_queue.task_done()
@@ -218,12 +218,14 @@ class Crawler(object):
     following_thread = FollowingThread('Fling', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
     follower_thread = FollowerThread('Flwer', self.followers_queue, self.profiles_queue, self.visited_followers_queue, self.visited_profiles_queue)
 
-    profile_thread.start()
+    # profile_thread.start()
     following_thread.start()
-    follower_thread.start()
-  
+    # follower_thread.start()
+    time.sleep(200)
+    profile_thread.start()
+    
     profile_thread.join()
     following_thread.join()
-    follower_thread.join()
+    # follower_thread.join()
 
     print "ALL DONE!"
