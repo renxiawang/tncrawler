@@ -7,6 +7,7 @@ Database Module
 """
 
 from pymongo import MongoClient
+from seed_users import seed
 
 class Database(object):
   def __init__(self):
@@ -94,13 +95,41 @@ class Database(object):
     unvisited_followers = []
     visited_followers = []
 
+    for uid in seed:
+      p = self.profile.find({"uid":uid})[0]
+      if p['profile']['friends_count'] <= 10000:
+        visited_profiles.append(p['uid'])
+        if 'following_ids' in p:
+          unvisited_profiles.extend(p['following_ids'])
+          visited_followings.append(p['uid'])
+        else:
+          unvisited_followings.append(p['uid'])
+
+    print "finish seed"
+
     for p in self.profile.find():
-      if p['profile']['friends_count'] > 10000:
-        continue
+      if 'profile' not in p:
+        unvisited_profiles.append(p['uid'])
       else:
         visited_profiles.append(p['uid'])
-        unvisited_followings.append(p['uid'])
-        unvisited_followers.append(p['uid'])
+    
+    print "finish load"
+    # for p in self.profile.find():
+    #   if p["uid"] in seed:
+    #     if p['profile']['friends_count'] <= 10000:
+    #       visited_profiles.append(p['uid'])
+    #       if 'following_ids' in p:
+    #         unvisited_profiles.extend(p['following_ids'])
+    #         visited_followings.append(p['uid'])
+    #       else:
+    #         unvisited_followings.append(p['uid'])
+      
+      
+    unvisited_profiles = list(set(unvisited_profiles).difference(set(visited_profiles)))
+    visited_profiles = list(set(visited_profiles))
+    unvisited_followings = list(set(unvisited_followings))
+    visited_followings = list(set(visited_followings))
+    print "finish"
       #if 'profile' in p:
       #  visited_profiles.append(p['uid'])
       #if 'following_ids' in p:

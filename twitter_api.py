@@ -5,13 +5,15 @@ import time
 import tweepy
 from tweepy.parsers import JSONParser
 
+from accounts import accounts
+
 class TwitterApi(object):
 
-  def __init__(self):
-    self.consumer_key = 'BfdpgMeDAzqNIixHhLjQ'
-    self.consumer_secret = 'wfYF8Tp4uSJ3nGgqe5yGB1Wn6XOX8MYC5vcuavXBpsU'
-    self.access_token = '153077173-bAfnlt3NJEGj6KDE8BDYq93GCJ3omoZMtJreqoU9'
-    self.access_secret = 'x2eMIdu5AK02bLldfE7gxVYdnsnLRIUXwWrDoxAo'
+  def __init__(self, username):
+    self.consumer_key = accounts[username]['consumer_key']
+    self.consumer_secret = accounts[username]['consumer_secret']
+    self.access_token = accounts[username]['access_token']
+    self.access_secret = accounts[username]['access_token_secret']
 
     self.auth = tweepy.auth.OAuthHandler(self.consumer_key, self.consumer_secret)
     self.auth.set_access_token(self.access_token, self.access_secret)
