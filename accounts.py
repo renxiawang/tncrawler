@@ -28,6 +28,24 @@ accounts = {
     'consumer_secret':'CMHlTqpNMgnN1LwqvcpHHM3VBE0yk6rlen5cYP9uXuQ',
     'access_token':'2187419989-7DvD73YSQlIYRx14kOt2hbMFRcpQxj11preT9fn',
     'access_token_secret':'5FLhgsh1H4jWeYEHCS2jmufTb90hd4rdT9WmdbQKyygsQ'
+  },
+  'twitter6.dsail': {
+    'consumer_key':'ST9NDcHtxgFX59j360g',
+    'consumer_secret':'ZfZrRVScukmUq5qjxAsFFrlA1aKAN7IkO9PxUUxA',
+    'access_token':'15142553-IcMScMG4SOTSsi9SZPvpoOSr67UmCB39IRzjP6jyw',
+    'access_token_secret':'PDtc9hYQ0YhfqDIXqgWtwK92EEOFVzIqYkn3LUwC3Bs'
+  },
+  'twitter7.dsail': {
+    'consumer_key':'Kmmyn2ZJ7Vy6HuVDVIuawNsK0',
+    'consumer_secret':'K7inxFn5Zgos3bsght3jqDw706hXBA7zypCd9TboJZj1MGOjWH',
+    'access_token':'15142553-ARF833jZuCuQKTW3M03sQuA6RKrztOWSQJsovqlUV',
+    'access_token_secret':'LnWtwmY84EpBRNNhYcdCLipIto7v1MFuJ9CMZcpkJV42V'
+  },
+  'twitter8.dsail': {
+    'consumer_key':'Eq6a6ANrraNw3o91u6pu43zHM',
+    'consumer_secret':'pGEllzXr89OFF5solfb5F4Xgjreqh4feqZTC7gHU1gPcnovCbU',
+    'access_token':'15142553-ZvaobcsIgbE24kd6LhyYasoJ9En1uBpXeR2akZTRZ',
+    'access_token_secret':'RRqliPk9VatZZwZEQjLwyw0w29ROxzIiKhoxCqHUOlANP'
   }
 
 }

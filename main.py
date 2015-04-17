@@ -11,7 +11,8 @@ def load_user_list():
   try:
     f = open(file_name, "r")
     for line in f.readlines():
-      user_list.append(int(line.strip()))
+      #user_list.append(int(line.strip()))
+      user_list.append(line.strip())
   except Exception, e:
     raise e
     user_list = None

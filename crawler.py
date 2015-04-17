@@ -8,13 +8,13 @@ import threading
 from Queue import Queue
 
 from twitter_api import TwitterApi
-from database import Database
+#from database import Database
 
 class ProfileThread(threading.Thread):
   def __init__(self, thread_name, username, profiles_queue, visited_profiles_queue):
     threading.Thread.__init__(self, name=thread_name)
     self.api = TwitterApi(username)
-    self.db = Database()
+    # self.db = Database()
     self.profiles_queue = profiles_queue
     self.visited_profiles_queue = visited_profiles_queue
 
@@ -25,18 +25,18 @@ class ProfileThread(threading.Thread):
         continue
       
       uid = self.profiles_queue.get()
-      if self.db.is_existed(uid, "profile"):
-        self.profiles_queue.task_done()
-        print "%s skip %d" % (self.name, uid)
-        continue
+      #if self.db.is_existed(uid, "profile"):
+      #  self.profiles_queue.task_done()
+      #  print "%s skip %d" % (self.name, uid)
+      #  continue
       print "%s processing %d" % (self.name, uid)
       user_profile = self.api.get_user_profile(uid)
 
       if user_profile == None:
-        self.db.record_failure(failed_proile=uid)
+        #self.db.record_failure(failed_proile=uid)
         self.profiles_queue.task_done()
       else:
-        self.db.insert_profile(user_profile)
+        #self.db.insert_profile(user_profile)
         self.visited_profiles_queue.put(uid)
 
       #self.db.update_profile_progress(self.profiles_queue, self.visited_profiles_queue)
@@ -50,7 +50,7 @@ class FollowingThread(threading.Thread):
   def __init__(self, thread_name, username, followings_queue, profiles_queue, visited_followings_queue, visited_profiles_queue):
     threading.Thread.__init__(self, name=thread_name)
     self.api = TwitterApi(username)
-    self.db = Database()
+    #self.db = Database()
     self.followings_queue = followings_queue
     self.profiles_queue = profiles_queue
     self.visited_followings_queue = visited_followings_queue
@@ -60,10 +60,10 @@ class FollowingThread(threading.Thread):
     while self.followings_queue.qsize() > 0:
       uid = self.followings_queue.get()
       
-      if self.db.is_existed(uid, "following_ids"):
-        self.followings_queue.task_done()
-        print "%s skip %d" % (self.name, uid)
-        continue
+      #if self.db.is_existed(uid, "following_ids"):
+      #  self.followings_queue.task_done()
+      #  print "%s skip %d" % (self.name, uid)
+      #  continue
 
       if type(uid) is types.IntType:
         print "%s processing %d" % (self.name, uid)
@@ -73,12 +73,13 @@ class FollowingThread(threading.Thread):
       
       # download followings ids
       if followings == None:
-        self.db.record_failure(failed_following=uid)
+        #self.db.record_failure(failed_following=uid)
         # time.sleep(61)
         self.followings_queue.task_done()
         continue
 
-      self.db.insert_following(uid, followings)
+      print uid,followings
+      #self.db.insert_following(uid, followings)
         
       self.visited_followings_queue.put(uid)
 
@@ -111,7 +112,7 @@ class FollowerThread(threading.Thread):
   def __init__(self, thread_name, username, followers_queue, profiles_queue, visited_followers_queue, visited_profiles_queue):
     threading.Thread.__init__(self, name=thread_name)
     self.api = TwitterApi(username)
-    self.db = Database()
+    #self.db = Database()
     self.followers_queue = followers_queue
     self.profiles_queue = profiles_queue
     self.visited_followers_queue = visited_followers_queue
@@ -122,10 +123,10 @@ class FollowerThread(threading.Thread):
       uid = self.followers_queue.get()
       
     
-      if self.db.is_existed(uid, "follower_ids"):
-        self.followers_queue.task_done()
-        print "skip ", uid
-        continue
+      #if self.db.is_existed(uid, "follower_ids"):
+      #  self.followers_queue.task_done()
+      #  print "skip ", uid
+      #  continue
 
       if type(uid) is types.IntType:
         print "Followers.... I am alive! ", uid
@@ -135,12 +136,12 @@ class FollowerThread(threading.Thread):
       
       # download followers ids
       if followers == None:
-        self.db.record_failure(failed_follower=uid)
+        #self.db.record_failure(failed_follower=uid)
         self.followers_queue.task_done()
         # time.sleep(61)
         continue
 
-      self.db.insert_follower(uid, followers)
+      #self.db.insert_follower(uid, followers)
         
       self.visited_followers_queue.put(uid)
       # add ids to task queues
@@ -192,43 +193,31 @@ class Crawler(object):
       self.visited_followers_queue.put(vf)
 
   def start(self):
-    profile_thread_1 = ProfileThread('Profi_1', 'twitter1.dsail', self.profiles_queue, self.visited_profiles_queue)
-    profile_thread_2 = ProfileThread('Profi_2', 'twitter2.dsail',self.profiles_queue, self.visited_profiles_queue)
-    profile_thread_3 = ProfileThread('Profi_3', 'twitter3.dsail', self.profiles_queue, self.visited_profiles_queue)
-    profile_thread_4 = ProfileThread('Profi_4', 'twitter4.dsail',self.profiles_queue, self.visited_profiles_queue)
-    profile_thread_5 = ProfileThread('Profi_5', 'twitter5.dsail', self.profiles_queue, self.visited_profiles_queue)
-
     following_thread_1 = FollowingThread('Fling_1', 'twitter1.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
     following_thread_2 = FollowingThread('Fling_2', 'twitter2.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
     following_thread_3 = FollowingThread('Fling_3', 'twitter3.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
     following_thread_4 = FollowingThread('Fling_4', 'twitter4.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
     following_thread_5 = FollowingThread('Fling_5', 'twitter5.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
-    
-    # follower_thread = FollowerThread('Flwer', self.followers_queue, self.profiles_queue, self.visited_followers_queue, self.visited_profiles_queue)
-    profile_thread_1.start()
-    profile_thread_2.start()
-    profile_thread_3.start()
-    profile_thread_4.start()
-    profile_thread_5.start()
+    following_thread_6 = FollowingThread('Fling_6', 'twitter6.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
+    following_thread_7 = FollowingThread('Fling_7', 'twitter7.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
+    following_thread_8 = FollowingThread('Fling_8', 'twitter8.dsail', self.followings_queue, self.profiles_queue, self.visited_followings_queue, self.visited_profiles_queue)
 
     following_thread_1.start()
     following_thread_2.start()
     following_thread_3.start()
     following_thread_4.start()
     following_thread_5.start()
-    # follower_thread.start()
-
-    profile_thread_1.join()
-    profile_thread_2.join()
-    profile_thread_3.join()
-    profile_thread_4.join()
-    profile_thread_5.join()
+    following_thread_6.start()
+    following_thread_7.start()
+    following_thread_8.start()
 
     following_thread_1.join()
     following_thread_2.join()
     following_thread_3.join()
     following_thread_4.join()
     following_thread_5.join()
-    # follower_thread.join()
+    following_thread_6.join()
+    following_thread_7.join()
+    following_thread_8.join()
 
     print "ALL DONE!"

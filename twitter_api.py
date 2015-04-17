@@ -39,23 +39,26 @@ class TwitterApi(object):
 
   def get_user_followings(self, uid=None, sname=None):
     friends_ids = []
-
+    names = []
     try:
       # friends_ids = self.api.friends_ids(user_id=uid, screen_name=sname)['ids']
       # print "get", len(friends_ids), "followings of ", uid
       # time.sleep(60)
       
       for friends in tweepy.Cursor(self.api.friends_ids, user_id=uid, screen_name=sname).pages():
-        print "crawling followings:", uid
+        print "crawling followings:", uid, sname
         friends_ids.extend(friends['ids'])
         time.sleep(60)
+
+      names = [u.screen_name for u in self.api.lookup_users(friends_ids)]
 
     except tweepy.error.TweepError, e:
       friends_ids = None
       print '%s failed because of %s' % (uid, e.reason)
       time.sleep(60)  
     
-    return friends_ids
+    return names
+    #return friends_ids
 
   def get_user_followers(self, uid=None, sname=None):
     followers_ids = []
